@@ -14,12 +14,18 @@ app.listen(PORT, () => {
 
 
 // ** INITIAL DATA
-const products = db.collection('products');
+try{
 
-products.insertOne({"name": "kefir", "price": 2.99, "category": "dairy"})
-.then((res, rej) => {
-    response.send({data: {"crud": "POST", res}});
-})
-.catch( err => {console.error(err)})
+    const products = db.collection('products');
+    
+    products.insertOne({"name": "kefir", "price": 2.99, "category": "dairy"})
+    .then((res, rej) => {
+        response.send({data: {"crud": "POST", res}});
+    })
+    .catch( err => {console.error(err)})
+}
+catch(e){
+    console.error(e)
+}
 
 //
