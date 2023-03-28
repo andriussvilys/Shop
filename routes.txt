@@ -1,0 +1,41 @@
+************* GET ************* 
+
+req.body = {
+	query: {},
+	options: {}
+}
+GET: {"query": {"category":"dairy"}}
+
+
+************* POST ************* 
+
+req.body = {
+docs : [ {}, {}, ...],
+options : {}
+}
+POST: {"docs": [
+            {
+                "name": "Shoe",
+                "price": 14.99,
+                "category": "Apparel"
+            },
+            {
+                "name": "Harambe gummy bears",
+                "price": 3.99,
+                "category": "Confectionery"
+            }
+]}
+
+************* PATCH ************* 
+
+req.body = {
+filter : {},
+updateDoc : {}
+}
+PATCH: {
+    "filter": {"category": "Dairy"},
+    "updateDoc": {"category": "Milkies"}
+}
+
+
+

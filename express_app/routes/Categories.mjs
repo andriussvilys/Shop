@@ -3,7 +3,7 @@ import db from '../conn.mjs'
 import {ObjectId} from 'mongodb'
 
 const router = express.Router();
-const products = db.collection('products');
+const categories = db.collection('categories');
 
 // 2XX — Success
     // 201 — Created
@@ -19,7 +19,7 @@ const products = db.collection('products');
 
 router.get('/', async (req, res) => {
 
-    products.find(req.query, req.params).toArray()
+    categories.find(req.query, req.params).toArray()
     .then( value => {
         res.status(200);
         res.send({data: { value }})
@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', (req, res) => {
 
-    products.insertMany(req.body, req.params)
+    categories.insertMany(req.body, req.params)
 
     .then( value => {
         res.status(200).send({data: { value }})
@@ -49,7 +49,7 @@ router.post('/', (req, res) => {
 //update one document if filter is matched
 //do not create a record if filter is not matched
 router.patch('/', (req, res) => {
-    products.updateMany(req.query, {$set : req.body})
+    categories.updateMany(req.query, {$set : req.body})
 
     .then( value => {
 
@@ -63,13 +63,16 @@ router.patch('/', (req, res) => {
     
 })
 
-//update record if filter is matched
-//or insert new if filter is not matched
+//update record, or insert new if filter is not matched
+//$set - if filter matched, and recorded to be updated
+//$setOnInsert - if filter not matched, and recorded to be inserted
 
 router.put('/', (req, res) => {
-    products.updateMany(
+    categories.updateMany(
         req.query, 
-        { $set : req.body, }, 
+        { 
+            $set : req.body, 
+        }, 
         { ...req.params, upsert: true }
         )
 
@@ -87,7 +90,7 @@ router.put('/', (req, res) => {
 
 router.delete('/', (req, res) => {
 
-    products.deleteMany(req.query)
+    categories.deleteMany(req.query)
 
     .then( value => {
 
