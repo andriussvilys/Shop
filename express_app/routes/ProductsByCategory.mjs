@@ -2,44 +2,33 @@ import express from 'express'
 import db from '../conn.mjs'
 
 const router = express.Router();
+const categories = db.collection('categories');
 const products = db.collection('products');
 
-// 2XX — Success
-    // 201 — Created
-    // 202 — Accepted
-    // 204 — No Content
-// 3XX — Redirection
-// 4XX — Client Error
-    // 400 — Bad req
-    // 403 — Forbidden
-    // 404 — Not Found
-// 5XX — Server Error
-    // 503 — Service Unavailable
+router.get('/:name/products', async (req, res) => {
 
-router.get('/', async (req, res) => {
-
-    console.log("GET  MANY")
     // products.find(req.query, req.params).toArray()
     const options = {}
 
-    products.find( req.query, options ).toArray()
+    products.find( { category : req.params.name}, options ).toArray()
 
     .then( value => {
         res.status(200).send({data: [...value]})
     })
     .catch((err) => {
+        console.log(err);
         res.status(500).send({"error": err.message})
     })
 
 })
 
-router.post('/', (req, res) => {
+router.post('/:name/products', (req, res) => {
 
     const options = {}
 
     if( Array.isArray(req.body)){
 
-        products.insertMany(req.body, options)
+        products.insertMany({...req.body, category: req.params.name}, options)
         .then( value => {
             res.status(200).send( {data: {...value}} )
         })
@@ -52,7 +41,7 @@ router.post('/', (req, res) => {
     }
 
     else{
-        products.insertOne(req.body)
+        products.insertOne({...req.body, category: req.params.name})
 
         .then( value => {
             res.status(200).send( { data: {...value} } );
@@ -67,10 +56,10 @@ router.post('/', (req, res) => {
 
 //update one document if filter is matched
 //do not create a record if filter is not matched
-router.patch('/', (req, res) => {
+router.patch('/:name/products', (req, res) => {
 
     const options = {}
-    products.updateMany(req.query, {$set : req.body})
+    products.updateMany({...req.query, category: req.params.name}, {$set : req.body})
 
     .then( value => {
 
@@ -86,11 +75,28 @@ router.patch('/', (req, res) => {
 
 //replace record if filter is matched
 //or insert new if filter is not matched
-router.put('/', (req, res) => {
+router.put('/:name/products', (req, res) => {
+
+    // const options = {}
+    // products.updateMany(
+    //         {...req.query, category : req.params.name}, 
+    //         { $set : req.body, }, 
+    //         { ...options, upsert: true }
+    //     )
+
+    // .then( value => {
+
+    //     res.status(200).send({data: {...value}})
+
+    // })
+
+    // .catch( err => {
+    //     res.status(500).send({"error": err.message})
+    // })
 
     const options = {}
 
-    products.find( req.query, options ).toArray()
+    products.find( {...req.query, category : req.params.name}, options ).toArray()
     .then( value => {
 
         let updateData = []
@@ -120,12 +126,12 @@ router.put('/', (req, res) => {
     .catch((err) => {
         res.status(500).send({"error": err.message})
     })
-
+    
 })
 
-router.delete('/', (req, res) => {
+router.delete('/:name/products', (req, res) => {
 
-    products.deleteMany(req.query)
+    products.deleteMany({category : req.params.name})
 
     .then( value => {
 

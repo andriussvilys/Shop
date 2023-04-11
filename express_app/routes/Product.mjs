@@ -1,5 +1,6 @@
 import express from 'express'
 import db from '../conn.mjs'
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 const products = db.collection('products');
@@ -8,12 +9,16 @@ const products = db.collection('products');
 //req.query = query to fetch relevant resources
 //req.params = options
 
-router.get('/', async (req, res) => {
+router.get('/:id', async (req, res) => {
 
-    products.findOne(req.query, req.params)
+    console.log("GET ONE")
 
+    const query = {_id: new ObjectId(req.params.id), ...req.params.query}
+    console.log(query)
+
+    products.findOne(query, {})
     .then( value => {
-        res.status(200).send( { data: value } )
+        res.status(200).send( {data : {...value}} )
     })
 
     .catch((err) => {
@@ -22,26 +27,15 @@ router.get('/', async (req, res) => {
 
 })
 
-router.post('/', (req, res) => {
+router.patch('/:id', (req, res) => {
 
-    products.insertOne(req.body)
+    const options = {}
+    const query = {_id : new ObjectId(req.params.id), ...req.params.query}
+    console.log(query)
 
+    products.updateOne(query, {$set : req.body}, options)
     .then( value => {
-        res.status(200).send( { data: value } );
-    })
-
-    .catch( err => {
-        res.status(500).send( { error: err.message } );
-    })
-
-})
-
-router.patch('/', (req, res) => {
-
-    products.updateOne(req.query, {$set : req.body}, req.params)
-    
-    .then( value => {
-        res.status(200).send( { data: value } )
+        res.status(200).send( { data: {...value} } )
     }) 
 
     .catch(err => {
@@ -50,13 +44,15 @@ router.patch('/', (req, res) => {
 
 })
 
-router.put('/', (req, res) => {
+router.put('/:id', (req, res) => {
 
-    products.replaceOne(req.query, req.body, {...req.params, upsert: true})
+    const query = {_id : new ObjectId(req.params.id), ...req.params.query}
+    console.log(query)
 
+    products.replaceOne(query, req.body, {upsert: true})
     .then( value => {
 
-        res.status(200).send({data: value})
+        res.status(200).send({data: {...value}})
 
     })
 
@@ -66,13 +62,14 @@ router.put('/', (req, res) => {
     
 })
 
-router.delete('/', (req, res) => {
+router.delete('/:id', (req, res) => {
 
-    products.deleteOne(req.query)
-
+    const query = {_id: new ObjectId(req.params.id), ...req.params.query}
+    
+    products.deleteOne(query)
     .then( value => {
 
-        res.status(200).send( { data: value } )
+        res.status(200).send( { data: {...value} } )
     })
 
     .catch( err => {
