@@ -5,9 +5,9 @@
 - No database schema
 - CRUD operations 
 - HTTP methods: GET, POST, PUT, PATCH, DELETE
-- Resources:
+- Resources:\
 -- Products \
--- Categories \
+-- Categories
 - URLS:
 -- GET/POST/PUT/PATCH/DELETE /products\
 -- GET/POST/PUT/PATCH/DELETE /categories\
