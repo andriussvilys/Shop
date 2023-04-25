@@ -8,13 +8,13 @@
 - Resources:
 -- Products  
 -- Categories  
-- URLS:
- -- GET/POST/PUT/PATCH/DELETE /products  
--- GET/POST/PUT/PATCH/DELETE /categories  
--- GET/PUT/PATCH/DELETE /products/:id  
--- GET/PUT/PATCH/DELETE /categories/:id  
--- GET/PUT/PATCH/DELETE /categories/:id/products
- -- GET /categories/:id?expand=products
+- URLS:\
+ -- GET/POST/PUT/PATCH/DELETE /products\
+-- GET/POST/PUT/PATCH/DELETE /categories\
+-- GET/PUT/PATCH/DELETE /products/:id\
+-- GET/PUT/PATCH/DELETE /categories/:id\
+-- GET/PUT/PATCH/DELETE /categories/:id/products\
+ -- GET /categories/:id?expand=products\
 - uses PORT 80
 
 ### LAUNCH CONTAINER
