@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --experimental-modules server.js"
+    "start": "node --experimental-modules server.js",
+    "dev": "nodemon --experimental-modules server.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,5 +15,7 @@
     "mongodb": "^5.1.0"
   },
   "description": "docker build -t express-api:<TAG_NUMBER> .",
-  "devDependencies": {}
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
 }

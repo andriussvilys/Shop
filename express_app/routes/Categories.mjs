@@ -1,9 +1,11 @@
 import express from 'express'
 import db from '../conn.mjs'
 import { ObjectId } from 'mongodb';
+import {getCategoryById} from './ProductsByCategory.mjs'
 
 const router = express.Router();
 const categories = db.collection('categories');
+const products = db.collection('products');
 
 //req.body = data to be uploaded/downloaded
 //req.params.query = query to fetch relevant resources
@@ -41,9 +43,14 @@ router.get('/', async (req, res) => {
 
 router.post('/', (req, res) => {
 
+    console.log(req)
+    console.log(req.body)
+
     const options = {}
 
     if( Array.isArray(req.body)){
+        console.log('insert MANY category')
+        console.log(req.body)
 
         categories.insertMany(req.body, options)
         .then( value => {
@@ -57,6 +64,8 @@ router.post('/', (req, res) => {
     }
 
     else{
+        console.log('insert ONE category')
+        console.log(req.body)
         categories.insertOne(req.body)
 
         .then( value => {
@@ -74,8 +83,8 @@ router.post('/', (req, res) => {
 //do not create a record if filter is not matched
 router.patch('/', (req, res) => {
 
-    const options = {}
-    categories.updateMany(req.query, {$set : req.body})
+    const options = {$set : req.body}
+    categories.updateMany(req.query, options)
 
     .then( value => {
 
@@ -132,19 +141,27 @@ router.delete('/', (req, res) => {
 
 router.get('/:id', async (req, res) => {
 
-    console.log("GET ONE")
-
-    const query = {_id: new ObjectId(req.params.id), ...req.params.query}
-    console.log(query)
-
-    categories.findOne(query, {})
-    .then( value => {
-        res.status(200).send( {data : {...value}} )
-    })
-
-    .catch((err) => {
-        res.status(500).send(  { error: err.message });
-    })
+    try{
+    
+        let categoryResult;
+    
+        categoryResult = await getCategoryById(req.params.id)
+        if(req.query.expand && req.query.expand == "products"){
+            console.log("expand products")
+            const productsResult = await products.find( {category: categoryResult.name} ).toArray()
+        
+            categoryResult = {...categoryResult, products : productsResult}
+        }
+        // else{
+        //     categoryResult = await getCategoryById(req.params.id)
+        // }
+    
+        res.status(200).send( {data : {...categoryResult}} )
+    }
+    catch(err){
+        const status = err.status ? err.status : 500
+        res.status(status).send( {error : err.message} )
+    }
 
 })
 

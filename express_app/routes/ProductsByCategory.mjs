@@ -1,147 +1,183 @@
 import express from 'express'
 import db from '../conn.mjs'
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 const categories = db.collection('categories');
 const products = db.collection('products');
 
-router.get('/:name/products', async (req, res) => {
+export const getCategoryById = async (id) => {
 
-    // products.find(req.query, req.params).toArray()
-    const options = {}
+    let _id
+    try{
+        _id = getObjectId(id)
+    }
+    catch(err){
+        //throw status 400 - bad request
+        throw err
+    }
 
-    products.find( { category : req.params.name}, options ).toArray()
+    try{
+        const category =  await categories.findOne({_id})
 
-    .then( value => {
-        res.status(200).send({data: [...value]})
-    })
-    .catch((err) => {
-        console.log(err);
-        res.status(500).send({"error": err.message})
-    })
+        if(!category ){
+            throw ({"message": `Category with id ${id} is not found`,"status": 400})
+        }
+        return category
+    }
+    catch(err){
+        const status = err.status ? err.status : 500 
+        throw {...err, "status": status}
+    }
+}
+
+const getObjectId = (id) => {
+    try{
+        const _id = new ObjectId(id)
+        return _id
+    }
+    catch(err){
+        throw({"message": err.message, "status": 400})
+    }
+}
+
+router.get('/:id/products', async (req, res) => {
+
+    try{
+        const category = await getCategoryById(req.params.id)
+        console.log(category)
+
+        const productsResponse = await products.find( {category : category.name} ).toArray()
+
+        res.status(200).send({data: productsResponse})
+
+    }
+    catch(err){
+        console.log("GET THROW ERROR")
+        console.log(err)
+        const status = err.status ? err.status : 500
+        res.status(status).send({"error": err.message})
+    }
 
 })
 
-router.post('/:name/products', (req, res) => {
+router.post('/:id/products', async (req, res) => {
 
-    const options = {}
+    try{
+        const category = await getCategoryById(req.params.id)
 
-    if( Array.isArray(req.body)){
+        let productsResponse;
 
-        products.insertMany({...req.body, category: req.params.name}, options)
-        .then( value => {
-            res.status(200).send( {data: {...value}} )
-        })
-    
-        .catch( err => {
-            console.error(err);
-            res.status(500).send({"error": err.message})
-        })
+        if( Array.isArray(req.body)){
+
+            const body = req.body.map(elem => {return {...elem, category: category.name}})
+
+            productsResponse = await products.insertMany(body)
+        }
+        else{
+
+            productsResponse = await products.insertOne({...req.body, category: category.name})
+
+        }
+
+        res.status(200).send({data: productsResponse})
 
     }
-
-    else{
-        products.insertOne({...req.body, category: req.params.name})
-
-        .then( value => {
-            res.status(200).send( { data: {...value} } );
-        })
-    
-        .catch( err => {
-            res.status(500).send( { error: err.message } );
-        })
+    catch(err){
+        const status = err.status ? err.status : 500
+        res.status(status).send({"error": err.message})
     }
 
 })
 
 //update one document if filter is matched
 //do not create a record if filter is not matched
-router.patch('/:name/products', (req, res) => {
+router.patch('/:id/products', async (req, res) => {
 
-    const options = {}
-    products.updateMany({...req.query, category: req.params.name}, {$set : req.body})
+    try{
+        const category = await getCategoryById(req.params.id)
 
-    .then( value => {
+        const productsResponse = await products.updateMany({category: category.name}, {$set : req.body})
 
-        res.status(200).send({data: {...value}})
+        res.status(200).send({data: productsResponse})
 
-    })
-
-    .catch( err => {
-        res.status(500).send({"error": err.message})
-    })
+    }
+    catch(err){
+        const status = err.status ? err.status : 500
+        res.status(status).send({"error": err.message})
+    }
     
 })
 
-//replace record if filter is matched
+//REPLACE record if filter is matched
 //or insert new if filter is not matched
-router.put('/:name/products', (req, res) => {
+router.put('/:id/products', async (req, res) => {
+
+    try{
+
+        const category = await getCategoryById(req.params.id)
+
+        const productsResponse = await products.find( {category : category.name} ).toArray()
+
+        const updateData = productsResponse.map(product => {
+            return {replaceOne: {
+                filter: { _id: product._id },
+                replacement: { ...req.body}
+                // replacement: { ...req.body, category : category.name }
+                }
+            }
+        })
+
+        const bulkWriteResponse = await products.bulkWrite(updateData)
+
+        res.status(200).send({data: bulkWriteResponse})
+
+    }
+    catch(err){
+        const status = err.status ? err.status : 500
+        res.status(status).send({"error": err.message})
+    }
+    
+})
+
+router.delete('/:id/products', async (req, res) => {
+
+    try{
+        const category = await getCategoryById(req.params.id)
+
+        const productsResponse = await products.deleteMany({category : category.name})
+
+        res.status(200).send({data: productsResponse})
+
+    }
+    catch(err){
+        const status = err.status ? err.status : 500
+        res.status(status).send({"error": err.message})
+    }
 
     // const options = {}
-    // products.updateMany(
-    //         {...req.query, category : req.params.name}, 
-    //         { $set : req.body, }, 
-    //         { ...options, upsert: true }
-    //     )
+    // const query = {_id : new ObjectId(req.params.id), ...req.params.query}
 
-    // .then( value => {
+    // categories.findOne(query, options)
+    // .then(response => {
 
-    //     res.status(200).send({data: {...value}})
+    //     products.deleteMany({category : response.name})
 
+    //     .then( value => {
+    
+    //         res.status(200).send({data: {...value}})
+    
+    //     })
+    
+    //     .catch( err => {
+    //         res.status(500).send({"error": err.message})
+    //     })
     // })
-
-    // .catch( err => {
+    // .catch(err => {
     //     res.status(500).send({"error": err.message})
     // })
 
-    const options = {}
 
-    products.find( {...req.query, category : req.params.name}, options ).toArray()
-    .then( value => {
-
-        let updateData = []
-
-        value.forEach(item => {
-            updateData.push(
-                    {     
-                         replaceOne: {
-                            filter: { _id: item._id },
-                            replacement: { ...req.body }
-                        }
-                    }
-                )
-        })
-
-        updateData.forEach(item => console.log(item))
-
-        products.bulkWrite(updateData)
-        .then(bulkWriteResponse => {
-            res.status(200).send({data: bulkWriteResponse})
-        })
-        .catch(bulkWriteError => {
-            res.status(500).send({"error": bulkWriteError.message})
-        })
-
-    })
-    .catch((err) => {
-        res.status(500).send({"error": err.message})
-    })
-    
-})
-
-router.delete('/:name/products', (req, res) => {
-
-    products.deleteMany({category : req.params.name})
-
-    .then( value => {
-
-    res.status(200).send({data: {...value}})
-
-    })
-
-    .catch( err => {
-        res.status(500).send({"error": err.message})
-    })
 
 })
 
